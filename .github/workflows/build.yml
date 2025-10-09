@@ -1,0 +1,48 @@
+name: build
+
+on:
+  push:
+    paths:
+      - VERSION
+  workflow_dispatch:
+    inputs:
+      runner:
+        description: 'Runner'
+        required: true
+        type: string
+        default: 'self-hosted' # ubuntu-latest
+
+jobs:
+  build:
+    runs-on: ${{ github.event_name == 'workflow_dispatch' && inputs.runner || 'self-hosted' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set ENV
+        run: | 
+          chmod +x *.sh
+          echo "VERSION=$(cat VERSION)" >> $GITHUB_ENV
+          echo "unix_time=$(date +%s)" >> $GITHUB_ENV
+          echo "date_today=$(date +'%Y%m%d')" >> $GITHUB_ENV
+    
+      - name: Build
+        env:
+            VERSION: ${{ env.VERSION }}
+            DEBIAN_FRONTEND: noninteractive
+            LOCAL_TEST_JKS: ${{ secrets.LOCAL_TEST_JKS }}
+            STORE_TEST_JKS: ${{ secrets.STORE_TEST_JKS }}
+        run: |
+          ./build.sh
+
+      - name: Set
+        run: |
+          mv $(find chromium/src/out/Default/apks/release -name '*.apk') ${{ env.VERSION }}-${{ env.unix_time }}.apk
+
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: v${{ env.VERSION }}
+          tag_name: v${{ env.VERSION }}
+          files: |
+            ${{ env.VERSION }}-${{ env.unix_time }}.apk
