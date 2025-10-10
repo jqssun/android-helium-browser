@@ -1,9 +1,6 @@
 name: build
 
 on:
-  push:
-    paths:
-      - VERSION
   workflow_dispatch:
     inputs:
       runner:
@@ -16,18 +13,17 @@ jobs:
   build:
     runs-on: ${{ github.event_name == 'workflow_dispatch' && inputs.runner || 'self-hosted' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+        with:
+          submodules: true
 
       - name: Set ENV
         run: | 
           chmod +x *.sh
-          echo "VERSION=$(cat VERSION)" >> $GITHUB_ENV
           echo "unix_time=$(date +%s)" >> $GITHUB_ENV
-          echo "date_today=$(date +'%Y%m%d')" >> $GITHUB_ENV
     
       - name: Build
         env:
-            VERSION: ${{ env.VERSION }}
             DEBIAN_FRONTEND: noninteractive
             LOCAL_TEST_JKS: ${{ secrets.LOCAL_TEST_JKS }}
             STORE_TEST_JKS: ${{ secrets.STORE_TEST_JKS }}
@@ -36,7 +32,9 @@ jobs:
 
       - name: Set
         run: |
-          mv $(find chromium/src/out/Default/apks/release -name '*.apk') ${{ env.VERSION }}-${{ env.unix_time }}.apk
+          export VERSION=$(find chromium/src/out/Default/apks/release -name '*.apk' | sed 's/.*\///;s/\.apk$//')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          mv $(find chromium/src/out/Default/apks/release -name '*.apk') $VERSION-${{ env.unix_time }}.apk
 
       - name: Publish
         uses: softprops/action-gh-release@v2

@@ -1,5 +1,10 @@
 export SCRIPT_DIR=$(realpath $(dirname $0))
 
+replace() {
+    export org=$2 new=$3
+    find $1 -type f -exec sed -i 's@'$org'@'$new'@g' {} \;
+}
+
 set_keys() {
     mkdir -p $SCRIPT_DIR/keys
     echo $LOCAL_TEST_JKS | base64 -d > $SCRIPT_DIR/keys/local.properties
