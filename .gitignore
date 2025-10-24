@@ -3,3 +3,5 @@
 chromium/
 depot_tools/
 keys/
+
+*.apk
