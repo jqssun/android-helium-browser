@@ -7,8 +7,6 @@ export CHROMIUM_SOURCE=https://github.com/chromium/chromium.git # https://chromi
 export DEBIAN_FRONTEND=noninteractive
 sudo apt update
 sudo apt install -y sudo lsb-release file nano git curl python3 python3-pillow
-git config --global user.name "github-actions[bot]"
-git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
 # https://github.com/uazo/cromite/blob/master/tools/images/chr-source/prepare-build.sh
 git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
