@@ -1,5 +1,4 @@
 #!/bin/bash
-
 source common.sh
 set_keys
 export VERSION=$(grep -m1 -o '[0-9]\+\(\.[0-9]\+\)\{3\}' vanadium/args.gn)
@@ -54,6 +53,20 @@ rm -rf third_party/angle/third_party/VK-GL-CTS/
 # python3 "${SCRIPT_DIR}/helium/utils/generate_resources.py" "${SCRIPT_DIR}/helium/resources/generate_resources.txt" "${SCRIPT_DIR}/helium/resources"
 # python3 "${SCRIPT_DIR}/helium/utils/replace_resources.py" "${SCRIPT_DIR}/helium/resources/helium_resources.txt" "${SCRIPT_DIR}/helium/resources" .
 
+sed -i 's/BASE_FEATURE(kExtensionManifestV2Unsupported, base::FEATURE_ENABLED_BY_DEFAULT);/BASE_FEATURE(kExtensionManifestV2Unsupported, base::FEATURE_DISABLED_BY_DEFAULT);/' extensions/common/extension_features.cc
+sed -i 's/BASE_FEATURE(kExtensionManifestV2Disabled, base::FEATURE_ENABLED_BY_DEFAULT);/BASE_FEATURE(kExtensionManifestV2Disabled, base::FEATURE_DISABLED_BY_DEFAULT);/' extensions/common/extension_features.cc
+: << TOOLBAR_PHONE
+sed -i '/<ViewStub/{N;N;N;N;N;N; /optional_button_stub/a\
+\
+        <ViewStub\
+            android:id="@+id/extension_toolbar_container_stub"\
+            android:inflatedId="@+id/extension_toolbar_container"\
+            android:layout_width="wrap_content"\
+            android:layout_height="match_parent" />
+}' chrome/browser/ui/android/toolbar/java/res/layout/toolbar_phone.xml
+sed -i 's/extension_toolbar_baseline_width">600dp/extension_toolbar_baseline_width">0dp/' chrome/browser/ui/android/extensions/java/res/values/dimens.xml
+TOOLBAR_PHONE
+
 cat > out/Default/args.gn <<EOF
 chrome_public_manifest_package = "io.github.jqssun.helium"
 is_desktop_android = true
@@ -97,7 +110,7 @@ include_both_v8_snapshots = false
 include_both_v8_snapshots_android_secondary_abi = false
 generate_linker_map = true
 EOF
-gn gen out/Default # gn args out/Default
+gn gen out/Default # gn args out/Default; echo 'treat_warnings_as_errors = false' >> out/Default/args.gn
 autoninja -C out/Default chrome_public_apk
 
 export PATH=$PWD/third_party/jdk/current/bin/:$PATH
