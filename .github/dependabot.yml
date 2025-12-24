@@ -12,3 +12,14 @@ updates:
         update-types:
           - "minor"
           - "patch"
+  - package-ecosystem: "gitsubmodule"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      gitsubmodule-all:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
