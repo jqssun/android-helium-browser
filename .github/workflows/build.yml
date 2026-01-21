@@ -22,6 +22,24 @@ jobs:
         with:
           submodules: true
 
+      - name: Cache depot_tools
+        uses: actions/cache@v4
+        with:
+          path: depot_tools
+          key: depot-tools-${{ runner.os }}-${{ hashFiles('.git/modules/vanadium/HEAD') }}
+          restore-keys: |
+            depot-tools-${{ runner.os }}-
+
+      - name: Cache Chromium dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            chromium/.gclient_entries
+            chromium/src/third_party
+          key: chromium-deps-${{ runner.os }}-${{ hashFiles('vanadium/args.gn') }}
+          restore-keys: |
+            chromium-deps-${{ runner.os }}-
+
       - name: Free up disk space
         run: |
           echo "Disk space before cleanup:"

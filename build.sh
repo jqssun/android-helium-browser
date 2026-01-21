@@ -8,13 +8,15 @@ sudo apt update
 sudo apt install -y sudo lsb-release file nano git curl python3 python3-pillow
 
 # https://github.com/uazo/cromite/blob/master/tools/images/chr-source/prepare-build.sh
-git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
+if [ ! -d "depot_tools" ]; then
+  git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
+fi
 export PATH="$PWD/depot_tools:$PATH"
 mkdir -p chromium/src/out/Default; cd chromium
 gclient root; cd src
 git init
 git remote add origin $CHROMIUM_SOURCE
-git fetch --depth 2 $CHROMIUM_SOURCE +refs/tags/$VERSION:chromium_$VERSION
+git fetch --depth 1 $CHROMIUM_SOURCE +refs/tags/$VERSION:chromium_$VERSION
 git checkout $VERSION
 export COMMIT=$(git show-ref -s $VERSION | head -n1)
 cat > ../.gclient <<EOF
@@ -42,7 +44,7 @@ replace "$SCRIPT_DIR/vanadium/patches" "Vanadium" "Helium"
 replace "$SCRIPT_DIR/vanadium/patches" "vanadium" "helium"
 git am --whitespace=nowarn --keep-non-patch $SCRIPT_DIR/vanadium/patches/*.patch
 
-gclient sync -D --no-history --nohooks
+gclient sync -D --no-history --nohooks --shallow -j $(nproc)
 gclient runhooks
 rm -rf third_party/angle/third_party/VK-GL-CTS/
 ./build/install-build-deps.sh --no-prompt
@@ -108,10 +110,21 @@ enable_av1_decoder=true
 enable_dav1d_decoder=true
 include_both_v8_snapshots = false
 include_both_v8_snapshots_android_secondary_abi = false
-generate_linker_map = true
+generate_linker_map = false
+
+# Build performance optimizations
+use_lld = true
+use_thin_lto = true
+thin_lto_enable_optimizations = true
+enable_precompiled_headers = false
+enable_nacl = false
+use_goma = false
+enable_backup_ref_ptr_support = false
+enable_pointer_compression_support = false
+v8_enable_pointer_compression = false
 EOF
 gn gen out/Default # gn args out/Default; echo 'treat_warnings_as_errors = false' >> out/Default/args.gn
-autoninja -C out/Default chrome_public_apk
+autoninja -C out/Default -j $(nproc) chrome_public_apk
 
 export PATH=$PWD/third_party/jdk/current/bin/:$PATH
 export ANDROID_HOME=$PWD/third_party/android_sdk/public
