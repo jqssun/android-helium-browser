@@ -21,7 +21,40 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: true
-      
+
+      - name: Free up disk space
+        run: |
+          echo "Disk space before cleanup:"
+          df -h
+
+          # Remove unnecessary software to free up disk space
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
+          # Clean up Docker images and containers
+          docker rmi $(docker images -q) || true
+          docker system prune -af || true
+
+          # Clean up apt cache
+          sudo apt-get clean
+
+          # Remove large packages that aren't needed
+          sudo apt-get remove -y '^aspnetcore-.*' || true
+          sudo apt-get remove -y '^dotnet-.*' || true
+          sudo apt-get remove -y '^llvm-.*' || true
+          sudo apt-get remove -y 'php.*' || true
+          sudo apt-get remove -y '^mongodb-.*' || true
+          sudo apt-get remove -y '^mysql-.*' || true
+          sudo apt-get remove -y azure-cli google-chrome-stable firefox powershell mono-devel || true
+          sudo apt-get autoremove -y
+          sudo apt-get clean
+
+          echo "Disk space after cleanup:"
+          df -h
+
       - name: Update 
         run: |
           cd vanadium
