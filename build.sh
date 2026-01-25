@@ -124,7 +124,7 @@ enable_pointer_compression_support = false
 v8_enable_pointer_compression = false
 EOF
 gn gen out/Default # gn args out/Default; echo 'treat_warnings_as_errors = false' >> out/Default/args.gn
-autoninja -C out/Default -j $(nproc) chrome_public_apk
+autoninja -C out/Default -j "${JOBS:-$(nproc)}" chrome_public_apk
 
 export PATH=$PWD/third_party/jdk/current/bin/:$PATH
 export ANDROID_HOME=$PWD/third_party/android_sdk/public
