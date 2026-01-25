@@ -34,8 +34,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
+            # Cache only lightweight Chromium metadata; avoid chromium/src/third_party
+            # as it can be tens of GB and exceed GitHub Actions cache limits.
             chromium/.gclient_entries
-            chromium/src/third_party
           key: chromium-deps-${{ runner.os }}-${{ hashFiles('vanadium/args.gn') }}
           restore-keys: |
             chromium-deps-${{ runner.os }}-
