@@ -7,7 +7,7 @@ on:
         description: 'Runner'
         required: true
         type: string
-        default: 'self-hosted' # ubuntu-latest
+        default: 'ubuntu-latest' # ubuntu-latest
   schedule:
     - cron: '0 0 */16 * *'
 
@@ -21,6 +21,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           submodules: true
+          filter: 'blob:none'
+          fetch-depth: 1
 
       - name: Cache depot_tools
         uses: actions/cache@v4
@@ -45,21 +47,17 @@ jobs:
         run: |
           echo "Disk space before cleanup:"
           df -h
-
           # Remove unnecessary software to free up disk space
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /usr/local/lib/android
           sudo rm -rf /opt/ghc
           sudo rm -rf /opt/hostedtoolcache/CodeQL
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-
           # Clean up Docker images and containers
           docker rmi $(docker images -q) || true
           docker system prune -af || true
-
           # Clean up apt cache
           sudo apt-get clean
-
           # Remove large packages that aren't needed
           sudo apt-get remove -y '^aspnetcore-.*' || true
           sudo apt-get remove -y '^dotnet-.*' || true
@@ -70,7 +68,6 @@ jobs:
           sudo apt-get remove -y azure-cli google-chrome-stable firefox powershell mono-devel || true
           sudo apt-get autoremove -y
           sudo apt-get clean
-
           echo "Disk space after cleanup:"
           df -h
 
