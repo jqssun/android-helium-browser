@@ -123,7 +123,7 @@ Adding new caches:
 ### Parallelism
 
 - `gclient sync` uses `-j $(nproc)`
-- `autoninja` currently uses `-j $(( $(nproc) + 4 ))` for better core utilization on high-core machines (the `JOBS` env var is not used)
+- `autoninja` currently uses `-j $(( $(nproc) + 4 ))` by default for better core utilization on high-core machines. This can be overridden by setting the `JOBS` environment variable.
 
 ## File Structure
 
