@@ -122,7 +122,7 @@ use_lld = true
 # size by ~2–3% and slightly reduce runtime performance; see CLAUDE.md line 184
 # for details. This trade-off is considered acceptable for our use case.
 use_thin_lto = false
-thin_lto_enable_optimizations = false
+# thin_lto_enable_optimizations = false
 enable_precompiled_headers = true
 enable_nacl = false
 use_goma = false
