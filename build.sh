@@ -128,7 +128,7 @@ v8_enable_pointer_compression = false
 EOF
 gn gen out/Default # gn args out/Default; echo 'treat_warnings_as_errors = false' >> out/Default/args.gn
 # Use aggressive parallelism: nproc + 4 for better core utilization
-NINJA_JOBS=$(($(nproc) + 4))
+NINJA_JOBS=${JOBS:-$(($(nproc) + 4))}
 autoninja -C out/Default -j "$NINJA_JOBS" chrome_public_apk
 
 export PATH=$PWD/third_party/jdk/current/bin/:$PATH
