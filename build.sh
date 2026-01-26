@@ -5,16 +5,8 @@ export VERSION=$(grep -m1 -o '[0-9]\+\(\.[0-9]\+\)\{3\}' vanadium/args.gn)
 export CHROMIUM_SOURCE=https://github.com/chromium/chromium.git # https://chromium.googlesource.com/chromium/src.git
 export DEBIAN_FRONTEND=noninteractive
 
-# Configure APT for parallel downloads
-sudo apt-get install -y apt-utils 2>/dev/null || true
-sudo mkdir -p /etc/apt/apt.conf.d
-cat <<'EOF' | sudo tee /etc/apt/apt.conf.d/99auto > /dev/null
-APT::Get::AutomaticReboot "false";
-Acquire::ForceIPv4 "true";
-APT::Acquire::Queue-Mode "access";
-Acquire::Retries "3";
-EOF
-
+# Note: APT mirror and parallel download optimization is handled by the CI workflow
+# (vegardit/fast-apt-mirror.sh@v1). Keep APT configuration here minimal to avoid conflicts.
 sudo apt update
 sudo apt install -y sudo lsb-release file nano git curl python3 python3-pillow
 
