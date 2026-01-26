@@ -4,6 +4,17 @@ set_keys
 export VERSION=$(grep -m1 -o '[0-9]\+\(\.[0-9]\+\)\{3\}' vanadium/args.gn)
 export CHROMIUM_SOURCE=https://github.com/chromium/chromium.git # https://chromium.googlesource.com/chromium/src.git
 export DEBIAN_FRONTEND=noninteractive
+
+# Configure APT for parallel downloads
+sudo apt-get install -y apt-utils 2>/dev/null || true
+sudo mkdir -p /etc/apt/apt.conf.d
+echo 'APT::Get::AutomaticReboot "false";' | sudo tee /etc/apt/apt.conf.d/99auto > /dev/null
+echo 'Acquire::ForceIPv4 "true";' | sudo tee -a /etc/apt/apt.conf.d/99auto > /dev/null
+
+# Use faster parallel downloads
+echo 'APT::Acquire::Queue-Mode "access";' | sudo tee -a /etc/apt/apt.conf.d/99auto > /dev/null
+echo 'Acquire::Retries "3";' | sudo tee -a /etc/apt/apt.conf.d/99auto > /dev/null
+
 sudo apt update
 sudo apt install -y sudo lsb-release file nano git curl python3 python3-pillow
 
@@ -77,7 +88,7 @@ target_cpu = "arm64"
 is_component_build = false
 is_debug = false
 is_official_build = true
-symbol_level = 1
+symbol_level = 0
 disable_fieldtrial_testing_config = true
 ffmpeg_branding = "Chrome"
 proprietary_codecs = true
@@ -91,7 +102,7 @@ google_api_key = "x"
 google_default_client_id = "x"
 google_default_client_secret = "x"
 
-blink_symbol_level=1
+blink_symbol_level=0
 build_contextual_search=false
 build_with_tflite_lib=true
 chrome_pgo_phase=0
@@ -102,7 +113,7 @@ enable_mdns=false
 exclude_unwind_tables=false
 icu_use_data_file=true
 rtc_build_examples=false
-use_debug_fission=true
+use_debug_fission=false
 use_errorprone_java_compiler=false
 use_official_google_api_keys=false
 use_rtti=false
@@ -114,9 +125,9 @@ generate_linker_map = false
 
 # Build performance optimizations
 use_lld = true
-use_thin_lto = true
-thin_lto_enable_optimizations = true
-enable_precompiled_headers = false
+use_thin_lto = false
+thin_lto_enable_optimizations = false
+enable_precompiled_headers = true
 enable_nacl = false
 use_goma = false
 enable_backup_ref_ptr_support = false
@@ -124,7 +135,9 @@ enable_pointer_compression_support = false
 v8_enable_pointer_compression = false
 EOF
 gn gen out/Default # gn args out/Default; echo 'treat_warnings_as_errors = false' >> out/Default/args.gn
-autoninja -C out/Default -j "${JOBS:-$(nproc)}" chrome_public_apk
+# Use aggressive parallelism: nproc + 4 for better core utilization
+NINJA_JOBS=$(($(nproc) + 4))
+autoninja -C out/Default -j "$NINJA_JOBS" chrome_public_apk
 
 export PATH=$PWD/third_party/jdk/current/bin/:$PATH
 export ANDROID_HOME=$PWD/third_party/android_sdk/public

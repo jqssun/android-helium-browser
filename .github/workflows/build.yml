@@ -11,12 +11,17 @@ on:
   schedule:
     - cron: '0 0 */16 * *'
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
 jobs:
   build:
     runs-on: ${{ github.event_name == 'workflow_dispatch' && inputs.runner || 'self-hosted' }}
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v6
         with:
@@ -43,32 +48,32 @@ jobs:
           restore-keys: |
             chromium-deps-${{ runner.os }}-
 
+      - name: Optimize APT mirrors
+        uses: vegardit/fast-apt-mirror.sh@v1
+        with:
+          healthchecks: 10
+          speedtests: 5
+          parallel_downloads: 8
+          cache_apt_lists: true
+
       - name: Free up disk space
+        uses: endersonmenezes/free-disk-space@v3
+        with:
+          remove_android: true
+          remove_dotnet: true
+          remove_haskell: true
+          remove_tool_cache: true
+          remove_swap: true
+          remove_packages: "azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable firefox postgresql* mysql* dotnet-sdk-*"
+          remove_packages_one_command: true
+          remove_folders: "/usr/share/swift /usr/share/miniconda /usr/share/az /usr/local/lib/node_modules /usr/local/share/chromium /usr/local/share/powershell /usr/local/julia /usr/local/aws-cli /usr/local/aws-sam-cli /usr/share/gradle /opt/ghc /usr/share/dotnet /usr/local/lib/android /opt/hostedtoolcache /var/lib/man-db/auto-update /usr/local/.ghcup /var/lib/apt/lists/*"
+          rm_cmd: "rmz"
+
+      - name: Additional cleanup
         run: |
-          echo "Disk space before cleanup:"
-          df -h
-          # Remove unnecessary software to free up disk space
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /opt/hostedtoolcache/CodeQL
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-          # Clean up Docker images and containers
-          docker rmi $(docker images -q) || true
-          docker system prune -af || true
-          # Clean up apt cache
-          sudo apt-get clean
-          # Remove large packages that aren't needed
-          sudo apt-get remove -y '^aspnetcore-.*' || true
-          sudo apt-get remove -y '^dotnet-.*' || true
-          sudo apt-get remove -y '^llvm-.*' || true
-          sudo apt-get remove -y 'php.*' || true
-          sudo apt-get remove -y '^mongodb-.*' || true
-          sudo apt-get remove -y '^mysql-.*' || true
-          sudo apt-get remove -y azure-cli google-chrome-stable firefox powershell mono-devel || true
-          sudo apt-get autoremove -y
-          sudo apt-get clean
-          echo "Disk space after cleanup:"
+          sudo apt-get clean -yq
+          sudo apt-get autoclean -y
+          sudo apt-get autoremove --purge -yq
           df -h
 
       - name: Update 
