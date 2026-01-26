@@ -8,12 +8,12 @@ export DEBIAN_FRONTEND=noninteractive
 # Configure APT for parallel downloads
 sudo apt-get install -y apt-utils 2>/dev/null || true
 sudo mkdir -p /etc/apt/apt.conf.d
-echo 'APT::Get::AutomaticReboot "false";' | sudo tee /etc/apt/apt.conf.d/99auto > /dev/null
-echo 'Acquire::ForceIPv4 "true";' | sudo tee -a /etc/apt/apt.conf.d/99auto > /dev/null
-
-# Use faster parallel downloads
-echo 'APT::Acquire::Queue-Mode "access";' | sudo tee -a /etc/apt/apt.conf.d/99auto > /dev/null
-echo 'Acquire::Retries "3";' | sudo tee -a /etc/apt/apt.conf.d/99auto > /dev/null
+cat <<'EOF' | sudo tee /etc/apt/apt.conf.d/99auto > /dev/null
+APT::Get::AutomaticReboot "false";
+Acquire::ForceIPv4 "true";
+APT::Acquire::Queue-Mode "access";
+Acquire::Retries "3";
+EOF
 
 sudo apt update
 sudo apt install -y sudo lsb-release file nano git curl python3 python3-pillow
