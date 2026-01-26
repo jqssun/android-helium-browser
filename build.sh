@@ -117,6 +117,10 @@ generate_linker_map = false
 
 # Build performance optimizations
 use_lld = true
+# NOTE: ThinLTO is intentionally disabled to significantly reduce build times
+# for Chrome APK builds in this environment. This may increase the final APK
+# size by ~2–3% and slightly reduce runtime performance; see CLAUDE.md line 184
+# for details. This trade-off is considered acceptable for our use case.
 use_thin_lto = false
 thin_lto_enable_optimizations = false
 enable_precompiled_headers = true
