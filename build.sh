@@ -4,17 +4,22 @@ set_keys
 export VERSION=$(grep -m1 -o '[0-9]\+\(\.[0-9]\+\)\{3\}' vanadium/args.gn)
 export CHROMIUM_SOURCE=https://github.com/chromium/chromium.git # https://chromium.googlesource.com/chromium/src.git
 export DEBIAN_FRONTEND=noninteractive
+
+# Note: APT mirror and parallel download optimization is handled by the CI workflow
+# (vegardit/fast-apt-mirror.sh@v1). Keep APT configuration here minimal to avoid conflicts.
 sudo apt update
 sudo apt install -y sudo lsb-release file nano git curl python3 python3-pillow
 
 # https://github.com/uazo/cromite/blob/master/tools/images/chr-source/prepare-build.sh
-git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
+if [ ! -d "depot_tools" ]; then
+  git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
+fi
 export PATH="$PWD/depot_tools:$PATH"
 mkdir -p chromium/src/out/Default; cd chromium
 gclient root; cd src
 git init
 git remote add origin $CHROMIUM_SOURCE
-git fetch --depth 2 $CHROMIUM_SOURCE +refs/tags/$VERSION:chromium_$VERSION
+git fetch --depth 1 $CHROMIUM_SOURCE +refs/tags/$VERSION:chromium_$VERSION
 git checkout $VERSION
 export COMMIT=$(git show-ref -s $VERSION | head -n1)
 cat > ../.gclient <<EOF
@@ -42,7 +47,7 @@ replace "$SCRIPT_DIR/vanadium/patches" "Vanadium" "Helium"
 replace "$SCRIPT_DIR/vanadium/patches" "vanadium" "helium"
 git am --whitespace=nowarn --keep-non-patch $SCRIPT_DIR/vanadium/patches/*.patch
 
-gclient sync -D --no-history --nohooks
+gclient sync -D --no-history --nohooks --shallow -j $(nproc)
 gclient runhooks
 rm -rf third_party/angle/third_party/VK-GL-CTS/
 ./build/install-build-deps.sh --no-prompt
@@ -75,7 +80,7 @@ target_cpu = "arm64"
 is_component_build = false
 is_debug = false
 is_official_build = true
-symbol_level = 1
+symbol_level = 0
 disable_fieldtrial_testing_config = true
 ffmpeg_branding = "Chrome"
 proprietary_codecs = true
@@ -89,7 +94,7 @@ google_api_key = "x"
 google_default_client_id = "x"
 google_default_client_secret = "x"
 
-blink_symbol_level=1
+blink_symbol_level=0
 build_contextual_search=false
 build_with_tflite_lib=true
 chrome_pgo_phase=0
@@ -100,7 +105,7 @@ enable_mdns=false
 exclude_unwind_tables=false
 icu_use_data_file=true
 rtc_build_examples=false
-use_debug_fission=true
+use_debug_fission=false
 use_errorprone_java_compiler=false
 use_official_google_api_keys=false
 use_rtti=false
@@ -108,10 +113,27 @@ enable_av1_decoder=true
 enable_dav1d_decoder=true
 include_both_v8_snapshots = false
 include_both_v8_snapshots_android_secondary_abi = false
-generate_linker_map = true
+generate_linker_map = false
+
+# Build performance optimizations
+use_lld = true
+# NOTE: ThinLTO is intentionally disabled to significantly reduce build times
+# for Chrome APK builds in this environment. This may increase the final APK
+# size by ~2–3% and slightly reduce runtime performance; see CLAUDE.md line 184
+# for details. This trade-off is considered acceptable for our use case.
+use_thin_lto = false
+# thin_lto_enable_optimizations = false
+enable_precompiled_headers = true
+enable_nacl = false
+use_goma = false
+enable_backup_ref_ptr_support = false
+enable_pointer_compression_support = false
+v8_enable_pointer_compression = false
 EOF
 gn gen out/Default # gn args out/Default; echo 'treat_warnings_as_errors = false' >> out/Default/args.gn
-autoninja -C out/Default chrome_public_apk
+# Use aggressive parallelism: nproc + 4 for better core utilization
+NINJA_JOBS=${JOBS:-$(($(nproc) + 4))}
+autoninja -C out/Default -j "$NINJA_JOBS" chrome_public_apk
 
 export PATH=$PWD/third_party/jdk/current/bin/:$PATH
 export ANDROID_HOME=$PWD/third_party/android_sdk/public
