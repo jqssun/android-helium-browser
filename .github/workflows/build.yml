@@ -30,7 +30,7 @@ jobs:
           fetch-depth: 1
 
       - name: Cache depot_tools
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: depot_tools
           key: depot-tools-${{ runner.os }}
@@ -38,7 +38,7 @@ jobs:
             depot-tools-${{ runner.os }}-
 
       - name: Cache Chromium dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             # Cache only lightweight Chromium metadata; avoid chromium/src/third_party
