@@ -1,0 +1,37 @@
+name: Report
+description: Report a bug or suggest a feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### Important
+        Before reporting a new issue, please check if it already exists [upstream](https://crbug.com/) or in the [issue tracker](https://github.com/jqssun/android-titanium-browser/issues).
+        
+        We aim to keep things lightweight. The scope of accepted bugs is limited to current patches. If a feature can be achieved via an extension or a user script, please refrain from opening a report.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Verification
+      description: Please verify the following before submitting.
+      options:
+        - label: I have checked upstream at crbug.com and I confirm this is NOT a known issue from Chromium.
+          required: true
+        - label: I have checked the issue tracker and I confirm this is NOT a known issue in this project.
+          required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Please provide the applicable device model, operating system version, and app version.
+    validations:
+      required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear and concise description of what the issue is.
+    validations:
+      required: true

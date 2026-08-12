@@ -1,0 +1,8 @@
+.DS_Store
+
+chromium/
+depot_tools/
+keys/
+
+*.aab
+*.apk
