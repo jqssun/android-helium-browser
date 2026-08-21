@@ -1,0 +1,11 @@
+import("//build/config/android/rules.gni")
+
+android_assets("extension_assets") {
+  disable_compression = true
+  renaming_sources = [
+    "bundled.json",
+  ]
+  renaming_destinations = [
+    "extensions/bundled.json",
+  ]
+}

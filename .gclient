@@ -35,5 +35,14 @@ hooks = [
               '--src_dir',
               'src']
   },
+  {
+    'name': 'fetch_titanium_extension',
+    'condition': 'checkout_android',
+    'action': ['python3',
+              '../extensions/bundle.py',
+              '../extensions/dist',
+              'titanium',
+              'https://github.com/jqssun/android-titanium-extension/releases/latest/download/titanium.crx']
+  },
 ]
 target_os = ['android']
